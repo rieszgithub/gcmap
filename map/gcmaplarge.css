@@ -1,0 +1,39 @@
+@charset "Shift_JIS";
+
+.gcmap_quickjmp {
+    margin-bottom:1px;
+    margin-left:  0;
+    margin-right: 0;
+}
+
+a.open_gcmap_quickjmp_group {
+    text-decoration:none;
+    color:black;
+    background-color:transparent;
+    border-width:2px 2px 0 2px;
+    border-style:solid;
+    border-color:#E8E8E8;
+    padding:.1em .5em .1em .5em;
+    margin-left:   0;
+    margin-right:  0;
+    margin-bottom: 0;
+}
+
+.gcmap_quickjmp_group {
+    background-color:#F8F8F8;
+    border:2px solid #E8E8E8;
+    padding:.2em .2em .2em .2em;
+    margin-top:   0;
+    margin-left:  0;
+    margin-right: 0;
+}
+
+.gcmap_copyright {
+    text-align:right;
+    font-size:0.8em;
+    background-color:#FFFFFF;
+    border-width:0 0 0 0;
+    border-style:solid;
+    border-color:#EEEEDD;
+    padding:1px 1px 1px 1px;
+}
