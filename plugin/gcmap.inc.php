@@ -15,11 +15,12 @@ function plugin_gcmap_init()
 {
   global $script;
   
-  if($script == 'http://m.is2004.net/') {
-    define('PLUGIN_GCMAP_APIKEY', 'ABQIAAAAOUYRkdyaHieW3_I3Hb1y4RRYlcO6cb13U8Yz-ENngYFN5a_XYhTS5r8YGBm1A_i9rrfmLBphKe98Zg');
+  if ($script == 'http://m.is2004.net/') {
+    //define('PLUGIN_GCMAP_APIKEY', 'ABQIAAAAOUYRkdyaHieW3_I3Hb1y4RRYlcO6cb13U8Yz-ENngYFN5a_XYhTS5r8YGBm1A_i9rrfmLBphKe98Zg');
   } else if($script == 'http://is2004.starlancer.org/gourmet/') {
-    define('PLUGIN_GCMAP_APIKEY', 'ABQIAAAAOUYRkdyaHieW3_I3Hb1y4RSMrOIIFPQ0c9606AYCvDLjECvr0hQbiAYbgoooO9gQ6B1Ga_Q-AnXSJg');
+    //define('PLUGIN_GCMAP_APIKEY', 'ABQIAAAAOUYRkdyaHieW3_I3Hb1y4RSMrOIIFPQ0c9606AYCvDLjECvr0hQbiAYbgoooO9gQ6B1Ga_Q-AnXSJg');
   }
+  define('PLUGIN_GCMAP_APIKEY', 'AIzaSyAVnxzoGirHSjKY8quqqbB8IoDA9rl4DFw');
   
   $messages = array(
 		    '_gcmap_plugin_gcname'    => '店名',
@@ -97,20 +98,18 @@ function plugin_gcmapmini_convert()
     <a href="http://www.google.co.jp/search?q=$qUJIS&ie=EUC-JP">Google</a> / 
     <a href="http://gsearch.gnavi.co.jp/rest/search.php?key=$qUJIS">ぐるなび</a> / 
     <a href="http://r.tabelog.com/japan/0/0/lst/?sw=$qUTF8">食べログ</a>
-    <script src="http://maps.google.co.jp/maps?file=api&amp;v=2&amp;key=$APIKey" type="text/javascript" charset="UTF-8"></script>
-    <script src="http://gmaps-utility-library.googlecode.com/svn/trunk/markermanager/release/src/markermanager.js"></script>
+    <script src="http://maps.googleapis.com/maps/api/js?key=$APIKey&amp;sensor=false" type="text/javascript" charset="UTF-8"></script>
+    <script src="map/jquery-1.10.2.min.js" type="text/javascript"></script>
+    <!--<script src="http://gmaps-utility-library.googlecode.com/svn/trunk/markermanager/release/src/markermanager.js"></script>-->
     <script src="map/gcmap.js" type="text/javascript" charset="UTF-8"></script>
     <script src="map/ecl.js" type="text/javascript"></script>
     <script type="text/javascript" charset="EUC-JP">
     //<![CDATA[
     function load() {
-      if(GBrowserIsCompatible()) {
-        wikiURL = '$script';
-        init_mini($latitude, $longitude);
-      }
+      wikiURL = '$script';
+      init_mini($latitude, $longitude);
     }
     window.onload = load;
-    window.unload = GUnload;
     //]]>
     </script>
 EOD;
@@ -205,30 +204,30 @@ function plugin_gcmaplarge_convert()
       <a class="open_gcmap_quickjmp_group" href="javascript:gcmap_op_quickjmp('BayArea')"  id="open_gcmap_quickjmp_group_BayArea">Bay Area</a>
     </p>
     <p class="gcmap_quickjmp_group" name="gcmap_quickjmp_group" id="gcmap_quickjmp_group_Hongo" style="display:none">
-      <a href="javascript:map.setCenter(new GLatLng(35.7129, 139.7594), 16)">正門</a>&nbsp;
-      <a href="javascript:map.setCenter(new GLatLng(35.7070, 139.7605), 16)">本三</a>&nbsp;
-      <a href="javascript:map.setCenter(new GLatLng(35.7178, 139.7651), 16)">根津</a>&nbsp;
-      <a href="javascript:map.setCenter(new GLatLng(35.7078, 139.7729), 16)">上野広小路</a>&nbsp;
-      <a href="javascript:map.setCenter(new GLatLng(35.7225, 139.7527), 16)">白山</a>
+      <a href="javascript:map.setCenter(new google.maps.LatLng(35.7129, 139.7594), 16)">正門</a>&nbsp;
+      <a href="javascript:map.setCenter(new google.maps.LatLng(35.7070, 139.7605), 16)">本三</a>&nbsp;
+      <a href="javascript:map.setCenter(new google.maps.LatLng(35.7178, 139.7651), 16)">根津</a>&nbsp;
+      <a href="javascript:map.setCenter(new google.maps.LatLng(35.7078, 139.7729), 16)">上野広小路</a>&nbsp;
+      <a href="javascript:map.setCenter(new google.maps.LatLng(35.7225, 139.7527), 16)">白山</a>
     </p>
     <p class="gcmap_quickjmp_group" name="gcmap_quickjmp_group" id="gcmap_quickjmp_group_Komaba" style="display:none">
-      <a href="javascript:map.setCenter(new GLatLng(35.6596, 139.6852), 16)">駒場</a>&nbsp;
-      <a href="javascript:map.setCenter(new GLatLng(35.6582, 139.7017), 16)">渋谷</a>
+      <a href="javascript:map.setCenter(new google.maps.LatLng(35.6596, 139.6852), 16)">駒場</a>&nbsp;
+      <a href="javascript:map.setCenter(new google.maps.LatLng(35.6582, 139.7017), 16)">渋谷</a>
     </p>
     <p class="gcmap_quickjmp_group" name="gcmap_quickjmp_group" id="gcmap_quickjmp_group_Akiba" style="display:none">
-      <a href="javascript:map.setCenter(new GLatLng(35.6958, 139.7581), 16)">神保町</a>&nbsp;
-      <a href="javascript:map.setCenter(new GLatLng(35.7040, 139.7543), 16)">水道橋</a>&nbsp;
-      <a href="javascript:map.setCenter(new GLatLng(35.6973, 139.7647), 16)">御茶ノ水</a>&nbsp;
-      <a href="javascript:map.setCenter(new GLatLng(35.6983, 139.7712), 16)">秋葉原</a>
+      <a href="javascript:map.setCenter(new google.maps.LatLng(35.6958, 139.7581), 16)">神保町</a>&nbsp;
+      <a href="javascript:map.setCenter(new google.maps.LatLng(35.7040, 139.7543), 16)">水道橋</a>&nbsp;
+      <a href="javascript:map.setCenter(new google.maps.LatLng(35.6973, 139.7647), 16)">御茶ノ水</a>&nbsp;
+      <a href="javascript:map.setCenter(new google.maps.LatLng(35.6983, 139.7712), 16)">秋葉原</a>
     </p>
     <p class="gcmap_quickjmp_group" name="gcmap_quickjmp_group" id="gcmap_quickjmp_group_Bukuro" style="display:none">
-      <a href="javascript:map.setCenter(new GLatLng(35.7298, 139.7111), 16)">池袋</a>
+      <a href="javascript:map.setCenter(new google.maps.LatLng(35.7298, 139.7111), 16)">池袋</a>
     </p>
     <p class="gcmap_quickjmp_group" name="gcmap_quickjmp_group" id="gcmap_quickjmp_group_Shinjuku" style="display:none">
-      <a href="javascript:map.setCenter(new GLatLng(35.6903, 139.7001), 16)">新宿</a>
+      <a href="javascript:map.setCenter(new google.maps.LatLng(35.6903, 139.7001), 16)">新宿</a>
     </p>
     <p class="gcmap_quickjmp_group" name="gcmap_quickjmp_group" id="gcmap_quickjmp_group_BayArea" style="display:none">
-      <a href="javascript:map.setCenter(new GLatLng(37.378342, -122.031326), 11)">Sunnyvale</a>
+      <a href="javascript:map.setCenter(new google.maps.LatLng(37.378342, -122.031326), 11)">Sunnyvale</a>
     </p>
     
     <h3>表示</h3>
@@ -275,8 +274,9 @@ function plugin_gcmaplarge_convert()
     </td></tr></table>
     
     <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
-    <script src="http://maps.google.co.jp/maps?file=api&amp;v=2&amp;key=$APIKey" type="text/javascript" charset="UTF-8"></script>
-    <script src="http://gmaps-utility-library.googlecode.com/svn/trunk/markermanager/release/src/markermanager.js"></script>
+    <script src="http://maps.googleapis.com/maps/api/js?key=$APIKey&amp;sensor=false" type="text/javascript" charset="UTF-8"></script>
+    <script src="map/jquery-1.10.2.min.js" type="text/javascript"></script>
+    <!--<script src="http://gmaps-utility-library.googlecode.com/svn/trunk/markermanager/release/src/markermanager.js"></script>-->
     <script src="map/ecl.js" type="text/javascript"></script>
     <script src="map/gcmap.js" type="text/javascript" charset="UTF-8"></script>
     <script type="text/javascript" charset="EUC-JP">
@@ -286,15 +286,12 @@ function plugin_gcmaplarge_convert()
     }
     function load() {
       resize();
-      if(GBrowserIsCompatible()) {
-        wikiURL = '$script';
-        init($latitude, $longitude, $zoom);
-        gcmap_op_quickjmp('Hongo');
-        document.getElementById('gcmap_quickjmp_group_Hongo').style.display = 'block';
-      }
+      wikiURL = '$script';
+      init($latitude, $longitude, $zoom);
+      gcmap_op_quickjmp('Hongo');
+      document.getElementById('gcmap_quickjmp_group_Hongo').style.display = 'block';
     }
     window.onload = load;
-    window.unload = GUnload;
     window.onresize = resize;
     //]]>
     </script>

@@ -6,41 +6,57 @@ var markerManager = null;
 
 var gcmapGeo = null;
 
-var markerObjs = null;
+var markers = null;
+
+var miniMarker = null;
 
 var prevNewPlace = null;
+
+var openInfo = null;
 
 var editMode = false;
 
 var request = null;
 
+var dblclick = false;
+
+function drawStatus(message) {
+  document.getElementById('gcmap_message').innerHTML = message;
+}
+
+function drawModifyStatus(message) {
+  document.getElementById('gcmap_modify_message').innerHTML = message;
+}
+
 function gcmap_modify_toggle() {
-  if (markerObjs == null) return;
+  if (markers == null) return;
 
   if (editMode) {
-    for (var i in markerObjs) {
-      markerObjs[i].disableDragging();
+    for (var i in markers) {
+      markers[i].setDraggable(true);
+      markers[i].setMap(map);
     }
-    document.getElementById('gcmap_modify_message').innerHTML = "";
+    drawModifyStatus("");
     editMode = false;
   } else {
-    for (var i in markerObjs) {
-      markerObjs[i].enableDragging();
+    for (var i in markers) {
+      markers[i].setDraggable(false);
     }
-    document.getElementById('gcmap_modify_message').innerHTML = "位置修正モード オン";
+    drawModifyStatus("位置修正モード オン");
     editMode = true;
   }
+
+  return false;
 }
 
 // クイックジャンプ用コード
 function gcmap_op_quickjmp(groupId) {
   var groups = document.getElementsByTagName('p');
-  //document.getElementById('gcmap_message').innerHTML = groups.length;
   for (var i = 0; i < groups.length; i++) {
     var group = groups.item(i);
-    if(group.getAttribute('name') == 'gcmap_quickjmp_group') {
+    if (group.getAttribute('name') == 'gcmap_quickjmp_group') {
       var openButton = document.getElementById('open_' + group.id);
-      if(group.id == ('gcmap_quickjmp_group_' + groupId)) {
+      if (group.id == ('gcmap_quickjmp_group_' + groupId)) {
         group.style.display              = 'block';
         openButton.style.backgroundColor = '#E8E8E8';
         openButton.style.color           = 'black';
@@ -55,19 +71,27 @@ function gcmap_op_quickjmp(groupId) {
 
 function gcmap_geojmp() {
   var address = document.getElementById("gcmap_search_address").value;
-  document.getElementById('gcmap_message').innerHTML = "検索中";
-  gcmapGeo.getLatLng(
-    address,
-    function(point) {
-      if (!point) {
-        document.getElementById('gcmap_message').innerHTML = address + "<br />見つかりませんでした";
-      } else {
-        map.setCenter(point, 13);
-        document.getElementById('gcmap_message').innerHTML = address;
-      }
-    }
-  );
+
+  drawStatus(address + "<br />検索中");
+
+  gcmapGeo.geocode(
+    {address: address},
+    geocodeComplete);
+
   return false;
+}
+
+function geocodeComplete(results, status) {
+  if (status == google.maps.GeocoderStatus.ZERO_RESULTS) {
+    drawStatus("見つかりませんでした");
+  } else if (status == google.maps.GeocoderStatus.OK) {
+    var geometry = results[0].geometry;
+    map.fitBounds(geometry.viewport);
+
+    drawStatus(results[0].formatted_address);
+  } else {
+    drawStatus("エラーが発生しました");
+  }
 }
 
 // URLエンコード (ecl.js使用)
@@ -77,21 +101,26 @@ function myencodeURL(str) {
 
 function openCreateWindow() {
   var ocForm = document.gcmapform;
-  if(ocForm.lng.value == '' || ocForm.lat.value == '' || prevNewPlace == null) {
-    document.getElementById('gcmap_message').innerHTML = "地図をクリックして位置を指定してください";
+
+  if (ocForm.lng.value == '' || ocForm.lat.value == '' || prevNewPlace == null) {
+    drawStatus("地図をクリックして位置を指定してください");
     return false;
   }
-  if(ocForm.gcname.value == '') {
-    document.getElementById('gcmap_message').innerHTML = "店名を入力してください";
+
+  if (ocForm.gcname.value == '') {
+    drawStatus("店名を入力してください");
     return false;
   }
+
   window.open(
-    wikiURL+'?cmd=gcmapnew&lng='+ocForm.lng.value+
-    '&lat='+ocForm.lat.value+
-    '&gcname='+myencodeURL(ocForm.gcname.value)+
-    '&page=gcmap/'+myencodeURL(ocForm.gcname.value),
+    wikiURL + '?cmd=gcmapnew&lng=' + ocForm.lng.value+
+    '&lat=' + ocForm.lat.value+
+    '&gcname=' + myencodeURL(ocForm.gcname.value) +
+    '&page=gcmap/' + myencodeURL(ocForm.gcname.value),
     '_blank');
-  document.getElementById('gcmap_message').innerHTML = "";
+
+  drawStatus("");
+
   return false;
 }
 
@@ -99,213 +128,253 @@ function gcReload() {
   loadMarkers();
 }
 
-function Holder(gcname, page, loc, comm, marker) {
+function CustomMarker(point, icon, gcname, page, loc, comm) {
   this.gcname = gcname;
   this.page   = page;
   this.loc    = loc;
   this.comm   = comm;
-  this.marker = marker;
   this.drawn  = false;
+
+  google.maps.Marker.apply(
+    this,
+    [{position: point,
+      draggable: false,
+      title: gcname,
+      icon: icon}]);
 }
 
-Holder.prototype.getMessage = function() {
+CustomMarker.prototype = new google.maps.Marker();
+
+CustomMarker.prototype.getMessage = function() {
   return '<a href="' + wikiURL + '?' + this.page + '" target="_blank"><strong>' + this.gcname + '</strong></a>' +
     (this.loc ? '<br><small>' + this.loc + '</small>' : '') +
     (this.comm ? '<br><br><div width="320px"><small>' + this.comm + '</small></div>' : '');
 }
 
-Holder.prototype.getMarker = function() {
-  return this.marker;
-}
-
-Holder.prototype.isDrawn = function() {
-  return this.drawn;
-}
-
-Holder.prototype.setDrawn = function(drawn) {
-  this.drawn = drawn;
-}
-
-Holder.prototype.showInfoWindow = function() {
-  this.getMarker().openInfoWindowHtml(this.getMessage(), {maxWidth: 320, noCloseOnClick: true});
-}
-
-Holder.prototype.disableDragging = function() {
-  this.marker.disableDragging();
-}
-
-Holder.prototype.enableDragging = function() {
-  this.marker.enableDragging();
+CustomMarker.prototype.showInfoWindow = function() {
+  var info = new google.maps.InfoWindow();
+  info.setContent(this.getMessage());
+  info.setOptions({maxWidth: 320});
+  info.open(map, this);
 }
 
 function gcOpenAllBalloon() {
-  for (var i in markerObjs) {
-    markerObjs[i].showInfoWindow();
+  for (var i in markers) {
+    markers[i].showInfoWindow();
   }
 }
 
 function updateMarkers() {
-  if (markerObjs == null) return;
+  if (markers == null) return;
 
   var area = map.getBounds();
-  for (var i = 0; i < markerObjs.length; i++) {
-    var marker = markerObjs[i].getMarker();
-    var drawn = markerObjs[i].isDrawn();
-    if (!area.containsLatLng(marker.getLatLng())) {
-      if (drawn) {
-	map.removeOverlay(marker);
-	markerObjs[i].setDrawn(false);
+
+  for (var i = 0; i < markers.length; i++) {
+    var marker = markers[i];
+    if (area.contains(marker.getPosition())) {
+      if (!marker.getMap()) {
+	marker.setMap(map);
       }
     } else {
-      if (!drawn) {
-	map.addOverlay(marker);
-	markerObjs[i].setDrawn(true);
+      if (marker.getMap()) {
+	marker.setMap(null);
       }
     }
   }
 }
 
 function drawMarkers() {
-  if (markerObjs == null) return;
-
-  map.clearOverlays();
+  if (markers == null) return;
 
   var area = map.getBounds();
-  for (var i = 0; i < markerObjs.length; i++) {
-    var marker = markerObjs[i].getMarker();
-    if (!area.containsLatLng(marker.getLatLng())) continue;
-
-    map.addOverlay(marker);
-    markerObjs[i].setDrawn(true);
+  for (var i = 0; i < markers.length; i++) {
+    var marker = markers[i];
+    if (area.contains(marker.getPosition())) {
+      marker.setMap(map);
+    } else {
+      marker.setMap(null);
+    }
   }
 }
 
 function loadMarkers() {
-  document.getElementById('gcmap_message').innerHTML = "load";
+  drawStatus("ロード開始");
 
-  request.open("GET", wikiURL+'?cmd=gcmap', true);
-  request.onreadystatechange = function() {
-    if (request.readyState == 4) {
-      document.getElementById('gcmap_message').innerHTML = "drawing";
-      var xmlDoc = request.responseXML;
-      var markers = xmlDoc.documentElement.getElementsByTagName("m");
+  $.ajax({
+    url: wikiURL + '?cmd=gcmap',
+    type: "GET",
+    dataType: "xml",
+    error: function() {
+      drawStatus("ロードに失敗しました");
+    },
+    success: loadMarkersComplete});
+}
 
-      markerObjs = new Array();
-      for (var i = 0; i < markers.length; i++) {
-        var gcname = markers[i].getAttribute("name");
-        var page   = markers[i].getAttribute("page");
-        var loc    = markers[i].getAttribute("loc");
-        var comm   = markers[i].getAttribute("comm");
+function createMarker(markerDescription) {
+  var gcname = markerDescription.getAttribute("name");
+  var page   = markerDescription.getAttribute("page");
+  var loc    = markerDescription.getAttribute("loc");
+  var comm   = markerDescription.getAttribute("comm");
 
-	var lat = parseFloat(markers[i].getAttribute("lat"));
-	var lng = parseFloat(markers[i].getAttribute("lng"));
+  var lat = parseFloat(markerDescription.getAttribute("lat"));
+  var lng = parseFloat(markerDescription.getAttribute("lng"));
 
-        var icon = new GIcon(G_DEFAULT_ICON);
-	if (markers[i].getAttribute("recomm") != null) {
-	    icon.image = "http://gmaps-samples.googlecode.com/svn/trunk/markers/blue/blank.png";
-	}
+  var icon = {
+    scaledSize: {width: 14, height: 22}
+  };
+  if (markerDescription.getAttribute("recomm") != null) {
+    icon.url = "map/blueblank.png";
+  } else {
+    icon.url = "map/redblank.png";
+  }
 
-        var point = new GLatLng(lat, lng, false);
+  var point = new google.maps.LatLng(lat, lng, false);
 
-        var marker = new GMarker(point, {draggable: true, title: gcname, icon: icon});
-	marker.disableDragging();
-        var mobj = new Holder(gcname, page, loc, comm, marker);
+  var marker = new CustomMarker(
+    point, icon, gcname, page, loc, comm);
 
-        GEvent.bind(marker, 'click', mobj,
-                    function() {
-                      this.getMarker().openInfoWindowHtml(this.getMessage(), {maxWidth: 320});
-                    });
-        GEvent.bind(marker, 'dragend', mobj,
-                    function() {
-                      this.marker.openInfoWindowHtml(
-                        '<strong>' + this.gcname + '</strong><br>' +
-                        'をこの位置に修正する場合は、<br>' +
-                        '<a href="'+wikiURL+'?cmd=gcmapposmod&page='+this.page+'&lng='+this.marker.getPoint().lng()+'&lat='+this.marker.getPoint().lat()+'" target="_blank"><strong>ここ</strong></a>をクリックしてWikiを開き、<br>' +
-                        '更新してください');
-                    });
-
-        markerObjs.push(mobj);
+  marker.addListener(
+    "click",
+    function() {
+      if (openInfo) {
+        openInfo.close();
       }
 
-      drawMarkers();
+      var info = new google.maps.InfoWindow();
+      info.setContent(this.getMessage());
+      info.setOptions({maxWidth: 320});
+      info.open(map, this);
 
-      document.getElementById('gcmap_message').innerHTML = "";
-    }
+      openInfo = info;
+    });
+
+  marker.addListener(
+    "dragend",
+    function() {
+      if (openInfo) {
+        openInfo.close();
+      }
+
+      var info = new google.maps.InfoWindow();
+      info.setContent(
+        '<strong>' + this.gcname + '</strong><br>' +
+          'をこの位置に修正する場合は、<br>' +
+          '<a href="' + wikiURL + '?cmd=gcmapposmod&page=' + this.page +
+          '&lng=' + this.getPosition().lng() +
+          '&lat=' + this.getPosition().lat() +
+          '" target="_blank"><strong>ここ</strong></a>をクリックしてWikiを開き、<br>' +
+          '更新してください');
+      info.open(map, this);
+
+      openInfo = info;
+    });
+
+  markers.push(marker);
+}
+
+function loadMarkersComplete(xmlDoc) {
+  drawStatus("ロード完了。描画中");
+
+  var markerDescriptions = xmlDoc.documentElement.getElementsByTagName("m");
+  markers = new Array();
+  for (var i = 0; i < markerDescriptions.length; i++) {
+    createMarker(markerDescriptions[i]);
   }
-  document.getElementById('gcmap_message').innerHTML = "ロード中";
-  request.send(null);
-  document.getElementById('gcmap_message').innerHTML = "ロード中2";
+
+  drawMarkers();
+
+  drawStatus("描画完了");
+}
+
+function clickHandler(e) {
+  if (dblclick) {
+    dblclick = false;
+    return;
+  }
+
+  var position = e.latLng;
+  document.gcmapform.lng.value = position.lng();
+  document.gcmapform.lat.value = position.lat();
+
+  var newPlace = new google.maps.Marker(
+    {position: position,
+     draggable: true});
+
+  var info = new google.maps.InfoWindow();
+  info.setContent(
+    'この位置に店を追加するには<br>' +
+      '「店名」欄に店の名前を入力し<br>' +
+      '「新規登録」ボタンを押してください');
+  info.open(map, newPlace);
+
+  newPlace.addListener(
+    "dragend",
+    function() {
+      var position = this.getPosition();
+      document.gcmapform.lng.value = position.lng();
+      document.gcmapform.lat.value = position.lat();
+    });
+
+  if (prevNewPlace != null) {
+    prevNewPlace.setMap(null);
+  }
+  prevNewPlace = newPlace;
+
+  if (openInfo) {
+    openInfo.close();
+  }
+
+  newPlace.setMap(map);
 }
 
 function init(lat, lng, zoom) {
-  request = GXmlHttp.create();
+  gcmapGeo = new google.maps.Geocoder();
 
-  gcmapGeo = new GClientGeocoder();
-
-  map = new GMap2(document.getElementById("gcmapdiv"));
-  map.addMapType(G_PHYSICAL_MAP);
-  var mapControl = new GHierarchicalMapTypeControl();
-  map.addControl(mapControl);
-  map.addControl(new GLargeMapControl());
-  map.setCenter(new GLatLng(lat, lng), zoom);
-
-  markerManager = new MarkerManager(map);
+  var mapOptions = {
+    zoomControlOptions: {
+      style: google.maps.ZoomControlStyle.LARGE
+    }
+  };
+  map = new google.maps.Map(document.getElementById("gcmapdiv"), mapOptions);
+  map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+  map.setCenter(new google.maps.LatLng(lat, lng));
+  map.setZoom(zoom);
 
   loadMarkers();
 
-  GEvent.addListener(map, "zoom", updateMarkers);
-  GEvent.addListener(map, "moveend", updateMarkers);
+  map.addListener("bounds_changed", updateMarkers);
+  map.addListener("dragend", updateMarkers);
+  map.addListener("resize", updateMarkers);
+  map.addListener("zoom_changed", updateMarkers);
 
-  GEvent.addListener(map, 'click', function(overlay, point) {
-    if (overlay) {
-      if (prevNewPlace != overlay) {
-        map.removeOverlay(prevNewPlace);
-        prevNewPlace = null;
-      }
-    } else if (point) {
-      document.gcmapform.lng.value = point.lng();
-      document.gcmapform.lat.value = point.lat();
+  map.addListener(
+    "dblclick",
+    function(e) {
+      dblclick = true;
+    });
 
-      var mobj = new Object();
-      var newPlace = new GMarker(point, {title: "この位置を登録", draggable: true});
-      mobj.marker = newPlace;
-
-      GEvent.bind(newPlace, 'click', mobj,
-        function() {
-          this.marker.openInfoWindowHtml(
-            'この位置に店を追加するには<br>' +
-            '「店名」欄に店の名前を入力し<br>' +
-            '「新規登録」ボタンを押してください');
-        });
-      GEvent.bind(newPlace, 'dragend', mobj,
-        function() {
-          document.gcmapform.lng.value = this.marker.getPoint().lng();
-          document.gcmapform.lat.value = this.marker.getPoint().lat();
-        });
-
-      if (prevNewPlace != null) {
-        map.removeOverlay(prevNewPlace);
-      }
-      map.addOverlay(newPlace);
-      prevNewPlace = newPlace;
-    }
-  });
+  map.addListener(
+    "click",
+    function(e) {
+      dblclick = false;
+      setTimeout(clickHandler, 500, e);
+    });
 }
 
 function init_mini(lat, lng) {
-  //document.getElementById('gcmap_message').innerHTML = "初期化中";
-  request = GXmlHttp.create();
+  gcmapGeo = new google.maps.Geocoder();
 
-  gcmapGeo = new GClientGeocoder();
+  var mapOptions = {
+    zoomControlOptions: {
+      style: google.maps.ZoomControlStyle.SMALL
+    }
+  };
+  map = new google.maps.Map(document.getElementById("gcmapdiv"), mapOptions);
+  var position = new google.maps.LatLng(lat, lng);
+  map.setCenter(position);
+  map.setZoom(16);
 
-  map = new GMap2(document.getElementById("gcmapdiv"));
-  map.addControl(new GSmallMapControl());
-  var point = new GLatLng(lat, lng);
-  map.setCenter(point, 16);
-
-  markerManager = new MarkerManager(map, 15);
-
-  map.addOverlay(new GMarker(point));
+  miniMarker = new google.maps.Marker(
+    {position: position});
+  miniMarker.setMap(map);
 }
-
-//  LocalWords:  markerObjs
