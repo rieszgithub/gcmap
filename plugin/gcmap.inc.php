@@ -98,7 +98,7 @@ function plugin_gcmapmini_convert()
     <a href="http://www.google.co.jp/search?q=$qUJIS&ie=EUC-JP">Google</a> / 
     <a href="http://gsearch.gnavi.co.jp/rest/search.php?key=$qUJIS">ぐるなび</a> / 
     <a href="http://r.tabelog.com/japan/0/0/lst/?sw=$qUTF8">食べログ</a>
-    <script src="http://maps.googleapis.com/maps/api/js?key=$APIKey&amp;sensor=false" type="text/javascript" charset="UTF-8"></script>
+    <script src="http://maps.googleapis.com/maps/api/js?key=$APIKey&amp;sensor=false&amp;language=ja" type="text/javascript" charset="UTF-8"></script>
     <script src="map/jquery-1.10.2.min.js" type="text/javascript"></script>
     <!--<script src="http://gmaps-utility-library.googlecode.com/svn/trunk/markermanager/release/src/markermanager.js"></script>-->
     <script src="map/gcmap.js" type="text/javascript" charset="UTF-8"></script>
@@ -274,7 +274,7 @@ function plugin_gcmaplarge_convert()
     </td></tr></table>
     
     <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
-    <script src="http://maps.googleapis.com/maps/api/js?key=$APIKey&amp;sensor=false" type="text/javascript" charset="UTF-8"></script>
+    <script src="http://maps.googleapis.com/maps/api/js?key=$APIKey&amp;sensor=false&amp;language=ja" type="text/javascript" charset="UTF-8"></script>
     <script src="map/jquery-1.10.2.min.js" type="text/javascript"></script>
     <!--<script src="http://gmaps-utility-library.googlecode.com/svn/trunk/markermanager/release/src/markermanager.js"></script>-->
     <script src="map/ecl.js" type="text/javascript"></script>

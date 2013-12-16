@@ -16,9 +16,9 @@ var openInfo = null;
 
 var editMode = false;
 
-var request = null;
-
 var dblclick = false;
+
+var movedMarker = null;
 
 function drawStatus(message) {
   document.getElementById('gcmap_message').innerHTML = message;
@@ -32,15 +32,24 @@ function gcmap_modify_toggle() {
   if (markers == null) return;
 
   if (editMode) {
+    if (movedMarker) {
+      movedMarker.revertMove();
+      movedMarker = null;
+    }
+
+    if (openInfo) {
+      openInfo.close();
+      openInfo = null;
+    }
+
     for (var i in markers) {
-      markers[i].setDraggable(true);
-      markers[i].setMap(map);
+      markers[i].setDraggable(false);
     }
     drawModifyStatus("");
     editMode = false;
   } else {
     for (var i in markers) {
-      markers[i].setDraggable(false);
+      markers[i].setDraggable(true);
     }
     drawModifyStatus("位置修正モード オン");
     editMode = true;
@@ -128,19 +137,20 @@ function gcReload() {
   loadMarkers();
 }
 
-function CustomMarker(point, icon, gcname, page, loc, comm) {
+function CustomMarker(position, icon, gcname, page, loc, comm) {
   this.gcname = gcname;
   this.page   = page;
   this.loc    = loc;
   this.comm   = comm;
   this.drawn  = false;
+  this.originalPosition = position;
 
   google.maps.Marker.apply(
     this,
-    [{position: point,
+    [{position: position,
       draggable: false,
-      title: gcname,
-      icon: icon}]);
+      title: gcname}]);
+//      icon: icon}]);
 }
 
 CustomMarker.prototype = new google.maps.Marker();
@@ -149,6 +159,10 @@ CustomMarker.prototype.getMessage = function() {
   return '<a href="' + wikiURL + '?' + this.page + '" target="_blank"><strong>' + this.gcname + '</strong></a>' +
     (this.loc ? '<br><small>' + this.loc + '</small>' : '') +
     (this.comm ? '<br><br><div width="320px"><small>' + this.comm + '</small></div>' : '');
+}
+
+CustomMarker.prototype.revertMove = function() {
+  this.setPosition(this.originalPosition);
 }
 
 CustomMarker.prototype.showInfoWindow = function() {
@@ -240,6 +254,11 @@ function createMarker(markerDescription) {
         openInfo.close();
       }
 
+      if (movedMarker && movedMarker !== this) {
+        movedMarker.revertMove();
+      }
+      movedMarker = this;
+
       var info = new google.maps.InfoWindow();
       info.setContent(this.getMessage());
       info.setOptions({maxWidth: 320});
@@ -254,6 +273,11 @@ function createMarker(markerDescription) {
       if (openInfo) {
         openInfo.close();
       }
+
+      if (movedMarker && movedMarker !== this) {
+        movedMarker.revertMove();
+      }
+      movedMarker = this;
 
       var info = new google.maps.InfoWindow();
       info.setContent(
@@ -275,8 +299,33 @@ function createMarker(markerDescription) {
 function loadMarkersComplete(xmlDoc) {
   drawStatus("ロード完了。描画中");
 
+  if (openInfo) {
+    openInfo.close();
+    openInfo = null;
+  }
+
+  if (editMode) {
+    gcmap_modify_toggle();
+  }
+
+  if (movedMarker) {
+    movedMarker.setMap(null);
+    movedMarker = null;
+  }
+
+  if (prevNewPlace) {
+    prevNewPlace.setMap(null);
+    prevNewPlace = null;
+  }
+
+  if (markers) {
+    for (var i = 0; i < markers.length; i++) {
+      markers[i].setMap(null);
+    }
+  }
+  markers = [];
+
   var markerDescriptions = xmlDoc.documentElement.getElementsByTagName("m");
-  markers = new Array();
   for (var i = 0; i < markerDescriptions.length; i++) {
     createMarker(markerDescriptions[i]);
   }
@@ -292,6 +341,11 @@ function clickHandler(e) {
     return;
   }
 
+  if (movedMarker) {
+    movedMarker.revertMove();
+    movedMarker = null;
+  }
+
   var position = e.latLng;
   document.gcmapform.lng.value = position.lng();
   document.gcmapform.lat.value = position.lat();
@@ -305,6 +359,11 @@ function clickHandler(e) {
     'この位置に店を追加するには<br>' +
       '「店名」欄に店の名前を入力し<br>' +
       '「新規登録」ボタンを押してください');
+  info.addListener(
+    "closeclick",
+    function(p) {
+      p.setMap(null);
+    }.bind(info, newPlace));
   info.open(map, newPlace);
 
   newPlace.addListener(
