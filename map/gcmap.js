@@ -33,7 +33,7 @@ function gcmap_modify_toggle() {
 
   if (editMode) {
     if (movedMarker) {
-      movedMarker.revertMove();
+      movedMarker.get("model").revertMove();
       movedMarker = null;
     }
 
@@ -137,44 +137,47 @@ function gcReload() {
   loadMarkers();
 }
 
-function CustomMarker(position, icon, gcname, page, loc, comm) {
-  this.gcname = gcname;
-  this.page   = page;
-  this.loc    = loc;
-  this.comm   = comm;
-  this.drawn  = false;
-  this.originalPosition = position;
+function CustomMarkerModel(marker, gcname, page, loc, comm, originalPosition) {
+  this.marker = marker;
 
-  google.maps.Marker.apply(
-    this,
-    [{position: position,
-      draggable: false,
-      title: gcname}]);
-//      icon: icon}]);
+  this.gcname = gcname;
+  this.page = page;
+  this.loc = loc;
+  this.comm = comm;
+  this.originalPosition = originalPosition;
 }
 
-CustomMarker.prototype = new google.maps.Marker();
-
-CustomMarker.prototype.getMessage = function() {
+CustomMarkerModel.prototype._getMessage = function() {
   return '<a href="' + wikiURL + '?' + this.page + '" target="_blank"><strong>' + this.gcname + '</strong></a>' +
     (this.loc ? '<br><small>' + this.loc + '</small>' : '') +
     (this.comm ? '<br><br><div width="320px"><small>' + this.comm + '</small></div>' : '');
 }
 
-CustomMarker.prototype.revertMove = function() {
-  this.setPosition(this.originalPosition);
+CustomMarkerModel.prototype.getMoveMessage = function() {
+  return '<strong>' + this.gcname + '</strong><br>' +
+      'をこの位置に修正する場合は、<br>' +
+      '<a href="' + wikiURL + '?cmd=gcmapposmod&page=' + this.page +
+      '&lng=' + this.marker.getPosition().lng() +
+      '&lat=' + this.marker.getPosition().lat() +
+      '" target="_blank"><strong>ここ</strong></a>をクリックしてWikiを開き、<br>' +
+      '更新してください';
 }
 
-CustomMarker.prototype.showInfoWindow = function() {
+CustomMarkerModel.prototype.revertMove = function() {
+  this.marker.setPosition(this.originalPosition);
+}
+
+CustomMarkerModel.prototype.showInfoWindow = function() {
   var info = new google.maps.InfoWindow();
-  info.setContent(this.getMessage());
+  info.setContent(this._getMessage());
   info.setOptions({maxWidth: 320});
-  info.open(map, this);
+  info.open(map, this.marker);
+  return info;
 }
 
 function gcOpenAllBalloon() {
   for (var i in markers) {
-    markers[i].showInfoWindow();
+    markers[i].get("model").showInfoWindow();
   }
 }
 
@@ -244,9 +247,9 @@ function createMarker(markerDescription) {
 
   var point = new google.maps.LatLng(lat, lng, false);
 
-  var marker = new CustomMarker(
-    point, icon, gcname, page, loc, comm);
-
+  var marker = new google.maps.Marker(
+      {position: point, title: gcname, draggable: false});
+  marker.set("model", new CustomMarkerModel(marker, gcname, page, loc, comm, point));
   marker.addListener(
     "click",
     function() {
@@ -255,16 +258,11 @@ function createMarker(markerDescription) {
       }
 
       if (movedMarker && movedMarker !== this) {
-        movedMarker.revertMove();
+        movedMarker.get("model").revertMove();
       }
       movedMarker = this;
 
-      var info = new google.maps.InfoWindow();
-      info.setContent(this.getMessage());
-      info.setOptions({maxWidth: 320});
-      info.open(map, this);
-
-      openInfo = info;
+      openInfo = this.get("model").showInfoWindow();
     });
 
   marker.addListener(
@@ -275,19 +273,12 @@ function createMarker(markerDescription) {
       }
 
       if (movedMarker && movedMarker !== this) {
-        movedMarker.revertMove();
+        movedMarker.get("model").revertMove();
       }
       movedMarker = this;
 
       var info = new google.maps.InfoWindow();
-      info.setContent(
-        '<strong>' + this.gcname + '</strong><br>' +
-          'をこの位置に修正する場合は、<br>' +
-          '<a href="' + wikiURL + '?cmd=gcmapposmod&page=' + this.page +
-          '&lng=' + this.getPosition().lng() +
-          '&lat=' + this.getPosition().lat() +
-          '" target="_blank"><strong>ここ</strong></a>をクリックしてWikiを開き、<br>' +
-          '更新してください');
+      info.setContent(this.get("model").getMoveMessage());
       info.open(map, this);
 
       openInfo = info;
@@ -342,7 +333,7 @@ function clickHandler(e) {
   }
 
   if (movedMarker) {
-    movedMarker.revertMove();
+    movedMarker.get("model").revertMove();
     movedMarker = null;
   }
 
