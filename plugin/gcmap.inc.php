@@ -3,7 +3,7 @@
  * PukiWiki gcmapプラグイン
  *
  * CopyRight 2005 Gulfweed GPL2
- * http://gulfweed.starlancer.org/
+ * https://gulfweed.starlancer.org/
  *
  * 変更履歴:
  *  2005.08.04: プロトタイプ
@@ -15,9 +15,9 @@ function plugin_gcmap_init()
 {
   global $script;
   
-  if ($script == 'http://m.is2004.net/') {
+  if ($script == 'https://m.is2004.net/') {
     //define('PLUGIN_GCMAP_APIKEY', 'ABQIAAAAOUYRkdyaHieW3_I3Hb1y4RRYlcO6cb13U8Yz-ENngYFN5a_XYhTS5r8YGBm1A_i9rrfmLBphKe98Zg');
-  } else if($script == 'http://is2004.starlancer.org/gourmet/') {
+  } else if($script == 'https://is2004.starlancer.org/gourmet/') {
     //define('PLUGIN_GCMAP_APIKEY', 'ABQIAAAAOUYRkdyaHieW3_I3Hb1y4RSMrOIIFPQ0c9606AYCvDLjECvr0hQbiAYbgoooO9gQ6B1Ga_Q-AnXSJg');
   }
   define('PLUGIN_GCMAP_APIKEY', 'AIzaSyAVnxzoGirHSjKY8quqqbB8IoDA9rl4DFw');
@@ -95,12 +95,12 @@ function plugin_gcmapmini_convert()
   
   return <<<EOD
     <div id="gcmapdiv" style="width: 400px; height: 300px"><noscript>Java Script をオンにして下さい</noscript></div>
-    <a href="http://www.google.co.jp/search?q=$qUJIS&ie=EUC-JP">Google</a> / 
-    <a href="http://gsearch.gnavi.co.jp/rest/search.php?key=$qUJIS">ぐるなび</a> / 
-    <a href="http://r.tabelog.com/japan/0/0/lst/?sw=$qUTF8">食べログ</a>
-    <script src="http://maps.googleapis.com/maps/api/js?key=$APIKey&amp;sensor=false&amp;language=ja" type="text/javascript" charset="UTF-8"></script>
+    <a href="https://www.google.co.jp/search?q=$qUJIS&ie=EUC-JP">Google</a> / 
+    <a href="https://gsearch.gnavi.co.jp/rest/search.php?key=$qUJIS">ぐるなび</a> / 
+    <a href="https://r.tabelog.com/japan/0/0/lst/?sw=$qUTF8">食べログ</a>
+    <script src="https://maps.googleapis.com/maps/api/js?key=$APIKey&amp;sensor=false&amp;language=ja" type="text/javascript" charset="UTF-8"></script>
     <script src="map/jquery-1.10.2.min.js" type="text/javascript"></script>
-    <!--<script src="http://gmaps-utility-library.googlecode.com/svn/trunk/markermanager/release/src/markermanager.js"></script>-->
+    <!--<script src="https://gmaps-utility-library.googlecode.com/svn/trunk/markermanager/release/src/markermanager.js"></script>-->
     <script src="map/gcmap.js" type="text/javascript" charset="UTF-8"></script>
     <script src="map/ecl.js" type="text/javascript"></script>
     <script type="text/javascript" charset="EUC-JP">
@@ -268,15 +268,15 @@ function plugin_gcmaplarge_convert()
     
     <tr><td colspan="2">
     <p class="gcmap_copyright">
-      Powered by <a href="http://maps.google.co.jp/">Google マップ</a><br />
-      gcmap plugin for PukiWiki &copy; 2007 <a href="http://gulfweed.starlancer.org/">Gulfweed</a><br />
+      Powered by <a href="https://maps.google.co.jp/">Google マップ</a><br />
+      gcmap plugin for PukiWiki &copy; 2007 <a href="https://gulfweed.starlancer.org/">Gulfweed</a><br />
     </p>
     </td></tr></table>
     
     <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
-    <script src="http://maps.googleapis.com/maps/api/js?key=$APIKey&amp;sensor=false&amp;language=ja" type="text/javascript" charset="UTF-8"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=$APIKey&amp;sensor=false&amp;language=ja" type="text/javascript" charset="UTF-8"></script>
     <script src="map/jquery-1.10.2.min.js" type="text/javascript"></script>
-    <!--<script src="http://gmaps-utility-library.googlecode.com/svn/trunk/markermanager/release/src/markermanager.js"></script>-->
+    <!--<script src="https://gmaps-utility-library.googlecode.com/svn/trunk/markermanager/release/src/markermanager.js"></script>-->
     <script src="map/ecl.js" type="text/javascript"></script>
     <script src="map/gcmap.js" type="text/javascript" charset="UTF-8"></script>
     <script type="text/javascript" charset="EUC-JP">
